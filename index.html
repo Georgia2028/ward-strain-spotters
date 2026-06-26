@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward Strain Spotters</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9f8f4;color:#1a1a1a;padding:1rem}
+.game-wrap{padding:1.5rem 0;max-width:680px;margin:0 auto}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem}
+.top-bar h2{font-size:18px;font-weight:500}
+.progress-bar{height:4px;background:#e5e3db;border-radius:4px;margin-bottom:1.5rem;overflow:hidden}
+.progress-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.4s ease}
+.scenario-card{background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem}
+.scenario-num{font-size:12px;color:#888780;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
+.perspective-box{border-radius:8px;padding:1rem;border:0.5px solid #d3d1c7;margin-bottom:1rem}
+.perspective-box.staff{background:#E6F1FB}
+.perspective-box.patient{background:#EEEDFE}
+.perspectives{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+.persp-label{font-size:11px;font-weight:600;margin-bottom:6px}
+.persp-label.staff{color:#185FA5}
+.persp-label.patient{color:#534AB7}
+.persp-text{font-size:13px;line-height:1.55}
+.evidence-note{font-size:11px;color:#534AB7;font-style:italic;margin-top:6px}
+.classify-note{font-size:12px;color:#185FA5;background:#E6F1FB;border:0.5px solid #85B7EB;border-radius:8px;padding:7px 12px;margin-bottom:12px;line-height:1.5}
+.drop-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.drop-col-label{font-size:11px;color:#888780;margin-bottom:6px}
+.drop-zone{min-height:52px;border:1.5px dashed #c5c3ba;border-radius:8px;padding:8px 10px;font-size:12px;color:#888780;display:flex;align-items:center;justify-content:center;text-align:center;transition:border-color 0.2s,background 0.2s;position:relative;cursor:pointer;background:#fff}
+.drop-zone.dragover{border-color:#1D9E75;background:#E1F5EE}
+.drop-zone.filled{border-style:solid;border-color:#c5c3ba;background:#f1efe8;color:#1a1a1a;font-size:13px;font-weight:500}
+.drop-zone.filled .remove-btn{display:flex}
+.remove-btn{display:none;position:absolute;top:4px;right:6px;font-size:14px;color:#888780;cursor:pointer;line-height:1;background:none;border:none;padding:0}
+.drop-zone.correct{border-color:#1D9E75;background:#E1F5EE;color:#0F6E56}
+.drop-zone.wrong{border-color:#E24B4A;background:#FCEBEB;color:#A32D2D}
+.chips-area{margin-top:1rem}
+.chips-label{font-size:12px;color:#888780;margin-bottom:8px}
+.chips-group-label{font-size:11px;color:#888780;margin-bottom:5px;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:6px 14px;border-radius:20px;border:0.5px solid #c5c3ba;background:#fff;font-size:12px;font-weight:500;cursor:grab;user-select:none;transition:background 0.15s,transform 0.15s}
+.chip:active{transform:scale(0.97)}
+.chip.dragging{opacity:0.4}
+.chip.used{opacity:0.3;pointer-events:none}
+.chip.selected{outline:2px solid #1D9E75;outline-offset:1px}
+.btn-row{display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap}
+button{padding:8px 18px;border-radius:8px;border:0.5px solid #c5c3ba;background:transparent;font-size:13px;color:#1a1a1a;cursor:pointer;transition:background 0.15s}
+button:hover{background:#f1efe8}
+button.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+button.primary:hover{opacity:0.85}
+.feedback-box{margin-top:1rem;padding:1rem;border-radius:8px;font-size:13px;line-height:1.6;display:none}
+.feedback-box.show{display:block}
+.feedback-box.correct{background:#E1F5EE;color:#0F6E56;border:0.5px solid #5DCAA5}
+.feedback-box.partial{background:#FAEEDA;color:#633806;border:0.5px solid #EF9F27}
+.feedback-box.wrong{background:#FCEBEB;color:#A32D2D;border:0.5px solid #F09595}
+.ref-line{font-size:11px;margin-top:8px;opacity:0.8;font-style:italic;border-top:0.5px solid currentColor;padding-top:6px}
+.end-screen{text-align:center;padding:2rem 1rem;display:none;max-width:680px;margin:0 auto}
+.end-screen.show{display:block}
+.end-title{font-size:20px;font-weight:500;margin-bottom:0.75rem}
+.end-msg{font-size:14px;color:#444;margin-bottom:1.5rem;line-height:1.6}
+.reflect-box{background:#f1efe8;border-radius:12px;padding:1.25rem;margin:1.25rem 0;text-align:left}
+.reflect-box p{font-size:15px;font-weight:500;margin-bottom:0.75rem;line-height:1.5}
+.reflect-box textarea{width:100%;min-height:80px;border:0.5px solid #c5c3ba;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;line-height:1.5;background:#fff}
+.patient-absent{font-size:11px;color:#888780;font-style:italic;padding:0.75rem;background:#f1efe8;border-radius:8px;border:0.5px solid #d3d1c7;margin-bottom:1rem}
+@media(max-width:500px){.perspectives{grid-template-columns:1fr}.drop-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="game-wrap">
+  <div class="top-bar"><h2>Ward Strain Spotters</h2></div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div id="game-area"></div>
+</div>
+<div class="end-screen" id="end-screen">
+  <div class="end-title">Well done — all three scenarios complete</div>
+  <div class="end-msg">These scenarios are drawn directly from a mixed methods systematic review of 16 studies on hospital ward strain. The evidence shows that ward strain is a systemic issue — not an individual failing — and that staff predominantly use reactive resilience to cope, with little anticipation or learning built into the system.</div>
+  <div class="reflect-box">
+    <p>What is one thing your ward could do differently?</p>
+    <textarea placeholder="Discuss at your table and write your thoughts here..."></textarea>
+  </div>
+  <button class="primary" onclick="restart()">Play again</button>
+</div>
+<script>
+const SCENARIOS=[
+  {
+    num:"1 of 3",hasPatient:false,
+    staffText:"Medication rounds are regularly delayed. Staff report extending working hours just to complete required tasks. Nurse-to-patient ratios on some wards reach 1 to 11, leaving little time to deliver care safely and on time.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Nurses extend their working hours and push through medication rounds late in order to keep up with demand under conditions of staff shortage.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Delivering a medication round — even late, even after extending working hours — is a care action. That sits in Process. Pushing through under pressure without any structural change is the Respond capacity: doing what needs to be done when something goes wrong. It keeps the ward going in the short term but does not address the staffing shortage underneath.",
+      spo:"Check the SPO layer. Nurses delivering medications, even late, is a care action — that is Process. The staffing shortage driving the delay is Structure. Any harm caused by the delay would be an Outcome.",
+      res:"Check the resilience capacity. Extending working hours and pushing through under immediate pressure is Respond — reacting to what is happening right now. There is no planning ahead or learning from the pattern here.",
+      wrong:"Both need another look. Pushing through a delayed medication round is a care action — Process. Doing it by extending working hours under immediate pressure is Respond — the most reactive of the four capacities.",
+      refs:"Evidence from: Al-Kandari, 2009; Cho, 2021; Happell, 2013; Krämer, 2016; Park, 2018; Sanford, 2022"
+    }
+  },
+  {
+    num:"2 of 3",hasPatient:true,
+    staffText:"Comfort care, emotional support, repositioning, and oral care are among the tasks most frequently missed when wards are understaffed. Delayed assessment increases the risk of pressure ulcers, falls, and urinary tract infections.",
+    patientText:"Patients placed on clinically inappropriate wards described feeling lost, confused about their care, and unable to get timely help. Some felt staff were too busy to respond to their needs.",
+    patientEvidence:"Patient perspective based on: Goulding, 2015 — qualitative interviews with NHS inpatients.",
+    staffAction:"Nurses are unable to provide comfort care, repositioning, and oral care due to insufficient staffing. Over time, patients develop healthcare-associated complications including pressure ulcers.",
+    drops:{spo:{answer:"Outcome",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Healthcare-associated complications — pressure ulcers, falls, urinary tract infections — are Outcomes: the end result of missed care under structural pressure. Nurses continuing to work under impossible conditions, absorbing the gap left by the staffing shortage, is the Respond capacity. The patient experience of feeling lost and unable to get help is the human cost of that same cycle.",
+      spo:"Check the SPO layer. Pressure ulcers and falls are Outcomes — consequences of missed care over time. The staffing shortage is Structure; the missed repositioning and comfort care is Process.",
+      res:"Check the resilience capacity. Nurses continuing despite being unable to provide full care — absorbing the gap with personal effort — is Respond. It is reactive and unsustainable.",
+      wrong:"Both need another look. Healthcare-associated complications are Outcomes — the end result of structural pressure cascading through missed care. Nurses absorbing the gap by continuing under impossible conditions is Respond.",
+      refs:"Evidence from: Al-Kandari, 2009; Brophy, 2024; Cho, 2021; Goulding, 2015; Magalhaes, 2017; Mainz, 2024; Park, 2018"
+    }
+  },
+  {
+    num:"3 of 3",hasPatient:false,
+    staffText:"Around 36% of nurses reported job dissatisfaction and around 30% intended to leave their positions. Doctors reported high workload and work-related strain. Staff used presenteeism — coming to work despite illness — to cover shifts during shortages, which worsened fatigue and wellbeing over time.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Nurses and doctors continue working under sustained pressure with no additional structural support. Over time they experience burnout, job dissatisfaction, and increased intention to leave.",
+    drops:{spo:{answer:"Outcome",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Burnout, job dissatisfaction, and intention to leave are Outcomes — the end result of sustained structural pressure with no systemic response. Presenteeism — coming in despite illness to cover gaps — is the Respond capacity in its most exhausted form. It keeps the ward running in the short term but worsens the very conditions it tries to address.",
+      spo:"Check the SPO layer. Burnout and intention to leave are Outcomes — consequences of sustained structural and process failures over time, not care actions in themselves.",
+      res:"Check the resilience capacity. Coming to work despite illness to cover short-staffed shifts is Respond — reacting to immediate pressure with personal endurance. Without Anticipate or Learn, the cycle continues.",
+      wrong:"Both need another look. Burnout and intention to leave are Outcomes. Presenteeism — absorbing the gap with personal effort despite illness — is Respond. It is the most exhausted form of reactive adaptation.",
+      refs:"Evidence from: Arogyaswamy, 2022; Brophy, 2024; Catania, 2024; Cho, 2021; Krämer, 2016; Sanford, 2022; Teoh, 2021"
+    }
+  }
+];
+
+let current=0,answered=false,pendingChip=null,dragChip=null,history=[];
+
+function renderScenario(){
+  answered=false;pendingChip=null;
+  const s=SCENARIOS[current];
+  const saved=history[current]||{};
+  document.getElementById('prog').style.width=((current/SCENARIOS.length)*100)+'%';
+  const spoOpts=s.drops.spo.options.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.spo===o?' used':''}" draggable="true" data-val="${o}" data-group="spo" onclick="chipClick(this)">${o}</div>`).join('');
+  const resOpts=s.drops.res.options.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.res===o?' used':''}" draggable="true" data-val="${o}" data-group="res" onclick="chipClick(this)">${o}</div>`).join('');
+  const spoFilled=saved.userAnswers&&saved.userAnswers.spo;
+  const resFilled=saved.userAnswers&&saved.userAnswers.res;
+  const perspHTML=s.hasPatient?`<div class="perspectives"><div class="perspective-box staff"><div class="persp-label staff">Staff perspective</div><div class="persp-text">${s.staffText}</div></div><div class="perspective-box patient"><div class="persp-label patient">Patient perspective</div><div class="persp-text">${s.patientText}</div><div class="evidence-note">${s.patientEvidence}</div></div></div>`:`<div class="perspective-box staff"><div class="persp-label staff">Staff perspective</div><div class="persp-text">${s.staffText}</div></div><div class="patient-absent">Patient perspective not available for this scenario — only 2 of 16 studies in this review included patient voices. This is itself a finding.</div>`;
+  document.getElementById('game-area').innerHTML=`<div class="scenario-card"><div class="scenario-num">Scenario ${s.num}</div>${perspHTML}<div class="classify-note"><strong>What to classify:</strong> ${s.staffAction}</div><div class="drop-row"><div><div class="drop-col-label">SPO layer</div><div class="drop-zone${spoFilled?' filled':''}" id="dz-spo" ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'spo')" onclick="dzClick(this,'spo')">${spoFilled?spoFilled:'Drop or tap here'}<button class="remove-btn" onclick="removeDz(event,'spo')">×</button></div></div><div><div class="drop-col-label">Resilience capacity</div><div class="drop-zone${resFilled?' filled':''}" id="dz-res" ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'res')" onclick="dzClick(this,'res')">${resFilled?resFilled:'Drop or tap here'}<button class="remove-btn" onclick="removeDz(event,'res')">×</button></div></div></div><div class="chips-area"><div class="chips-label">Tap to select, then tap a box — or drag and drop</div><div class="chips-group-label">SPO layer</div><div class="chips" id="spo-chips">${spoOpts}</div><div class="chips-group-label">Resilience capacity</div><div class="chips" id="res-chips">${resOpts}</div></div><div class="feedback-box" id="feedback"></div><div class="btn-row"><button class="primary" onclick="submitAnswer()" id="submit-btn">Check</button>${current>0?'<button onclick="prevScenario()">← Back</button>':''}</div></div>`;
+  if(!history[current])history[current]={userAnswers:{}};
+  attachDragListeners();
+}
+
+function getUserAnswers(){return history[current]?history[current].userAnswers:{};}
+function chipClick(el){if(el.classList.contains('used'))return;if(pendingChip===el){el.classList.remove('selected');pendingChip=null;return;}document.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));pendingChip=el;el.classList.add('selected');}
+function dzClick(dz,key){if(answered)return;if(pendingChip){placeChip(pendingChip.dataset.val,key,dz);pendingChip.classList.add('used');pendingChip.classList.remove('selected');pendingChip=null;}}
+function placeChip(val,key,dz){const ua=getUserAnswers();const prev=ua[key];if(prev){document.querySelectorAll('.chip').forEach(c=>{if(c.dataset.val===prev&&c.dataset.group===key)c.classList.remove('used');});}ua[key]=val;dz.classList.add('filled');const btn=dz.querySelector('.remove-btn');const textNode=dz.childNodes[0];if(textNode&&textNode.nodeType===3)textNode.textContent=val;else{const t=document.createTextNode(val);dz.insertBefore(t,dz.firstChild);}if(btn)btn.style.display='flex';}
+function removeDz(e,key){e.stopPropagation();if(answered)return;const ua=getUserAnswers();const val=ua[key];if(!val)return;document.querySelectorAll('.chip').forEach(c=>{if(c.dataset.val===val&&c.dataset.group===key)c.classList.remove('used');});delete ua[key];const dz=document.getElementById('dz-'+key);dz.classList.remove('filled');const btn=dz.querySelector('.remove-btn');const textNode=dz.childNodes[0];if(textNode&&textNode.nodeType===3)textNode.textContent='Drop or tap here';if(btn)btn.style.display='none';}
+function attachDragListeners(){document.querySelectorAll('.chip').forEach(c=>{c.addEventListener('dragstart',e=>{dragChip=c;c.classList.add('dragging');e.dataTransfer.setData('text/plain',c.dataset.val+'|'+c.dataset.group);});c.addEventListener('dragend',()=>{dragChip=null;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('dragging'));});});}
+function dzOver(e,dz){e.preventDefault();dz.classList.add('dragover');}
+function dzLeave(dz){dz.classList.remove('dragover');}
+function dzDrop(e,dz,key){e.preventDefault();dz.classList.remove('dragover');if(answered)return;const raw=e.dataTransfer.getData('text/plain').split('|');placeChip(raw[0],key,dz);if(dragChip){dragChip.classList.add('used');dragChip.classList.remove('selected');}}
+function submitAnswer(){if(answered)return;const s=SCENARIOS[current];const ua=getUserAnswers();const spoCorrect=ua.spo===s.drops.spo.answer;const resCorrect=ua.res===s.drops.res.answer;answered=true;if(history[current])history[current].answered=true;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));pendingChip=null;const dzSpo=document.getElementById('dz-spo');const dzRes=document.getElementById('dz-res');dzSpo.classList.remove('filled');dzRes.classList.remove('filled');dzSpo.classList.add(spoCorrect?'correct':'wrong');dzRes.classList.add(resCorrect?'correct':'wrong');const fb=document.getElementById('feedback');let fbClass,fbText;if(spoCorrect&&resCorrect){fbClass='correct';fbText='<strong>Both right</strong><br>'+s.feedback.correct;}else if(spoCorrect&&!resCorrect){fbClass='partial';fbText='<strong>SPO right, resilience capacity needs another look</strong><br>'+s.feedback.res;}else if(!spoCorrect&&resCorrect){fbClass='partial';fbText='<strong>Resilience right, SPO layer needs another look</strong><br>'+s.feedback.spo;}else{fbClass='wrong';fbText='<strong>Both need another look</strong><br>'+s.feedback.wrong;}fbText+=`<div class="ref-line">${s.feedback.refs}</div>`;fb.className='feedback-box show '+fbClass;fb.innerHTML=fbText;const isLast=current===SCENARIOS.length-1;document.getElementById('submit-btn').textContent=isLast?'Finish →':'Next →';document.getElementById('submit-btn').onclick=isLast?showEnd:nextScenario;}
+function nextScenario(){current++;renderScenario();}
+function prevScenario(){if(current>0){answered=false;current--;renderScenario();const saved=history[current];if(saved&&saved.answered){answered=true;const s=SCENARIOS[current];const ua=saved.userAnswers;const spoCorrect=ua.spo===s.drops.spo.answer;const resCorrect=ua.res===s.drops.res.answer;const dzSpo=document.getElementById('dz-spo');const dzRes=document.getElementById('dz-res');dzSpo.classList.remove('filled');dzRes.classList.remove('filled');dzSpo.classList.add(spoCorrect?'correct':'wrong');dzRes.classList.add(resCorrect?'correct':'wrong');let fbClass,fbText;if(spoCorrect&&resCorrect){fbClass='correct';fbText='<strong>Both right</strong><br>'+s.feedback.correct;}else if(spoCorrect&&!resCorrect){fbClass='partial';fbText='<strong>SPO right, resilience capacity needs another look</strong><br>'+s.feedback.res;}else if(!spoCorrect&&resCorrect){fbClass='partial';fbText='<strong>Resilience right, SPO layer needs another look</strong><br>'+s.feedback.spo;}else{fbClass='wrong';fbText='<strong>Both need another look</strong><br>'+s.feedback.wrong;}fbText+=`<div class="ref-line">${s.feedback.refs}</div>`;const fb=document.getElementById('feedback');fb.className='feedback-box show '+fbClass;fb.innerHTML=fbText;const isLast=current===SCENARIOS.length-1;document.getElementById('submit-btn').textContent=isLast?'Finish →':'Next →';document.getElementById('submit-btn').onclick=isLast?showEnd:nextScenario;}}}
+function showEnd(){document.getElementById('game-area').style.display='none';document.getElementById('prog').style.width='100%';document.getElementById('end-screen').classList.add('show');}
+function restart(){current=0;answered=false;pendingChip=null;history=[];document.getElementById('end-screen').classList.remove('show');document.getElementById('game-area').style.display='block';renderScenario();}
+renderScenario();
+</script>
+</body>
+</html>
