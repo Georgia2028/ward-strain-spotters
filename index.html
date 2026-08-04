@@ -61,17 +61,38 @@ button.primary:hover{opacity:0.85}
 .reflect-box p{font-size:15px;font-weight:500;margin-bottom:0.75rem;line-height:1.5}
 .reflect-box textarea{width:100%;min-height:80px;border:0.5px solid #c5c3ba;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;line-height:1.5;background:#fff}
 .patient-absent{font-size:11px;color:#888780;font-style:italic;padding:0.75rem;background:#f1efe8;border-radius:8px;border:0.5px solid #d3d1c7;margin-bottom:1rem}
+.start-screen{text-align:left;padding:2rem 1.25rem;max-width:680px;margin:0 auto}
+.start-screen .end-title{text-align:center}
+.start-list{list-style:none;counter-reset:step;display:flex;flex-direction:column;gap:0.85rem;margin-bottom:1.5rem}
+.start-list li{counter-increment:step;position:relative;padding-left:2rem;font-size:14px;line-height:1.55;color:#333}
+.start-list li::before{content:counter(step);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:#1a1a1a;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.start-list li strong{color:#1a1a1a}
+.start-btn-row{text-align:center}
 @media(max-width:500px){.perspectives{grid-template-columns:1fr}.drop-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="game-wrap">
+<div class="start-screen" id="start-screen">
+  <div class="end-title">How to play Ward Strain Spotters</div>
+  <ol class="start-list">
+    <li>Each scenario shows a real situation from the ward strain systematic review — sometimes from a staff perspective only, sometimes staff and patient side by side.</li>
+    <li>Read the situation, then look at <strong>What to classify</strong> — the specific action you need to sort.</li>
+    <li>Sort it two ways: the <strong>SPO layer</strong> (Structure, Process, or Outcome) and the <strong>resilience capacity</strong> (Respond, Monitor, Learn, or Anticipate).</li>
+    <li>Drag a chip into a box, or tap a chip then tap a box — both work.</li>
+    <li>Changed your mind? Tap the × on a filled box to clear it and pick again.</li>
+    <li>Once both boxes are filled, tap <strong>Check</strong>. You'll see what's right, what's not, and why — plus the study it's drawn from.</li>
+    <li>Tap <strong>Next</strong> to continue, or <strong>Back</strong> to revisit a previous scenario — your answer and feedback are saved.</li>
+    <li>At the end, discuss as a table: <strong>what is one thing your ward could do differently?</strong></li>
+  </ol>
+  <div class="start-btn-row"><button class="primary" onclick="startGame()">Start</button></div>
+</div>
+<div class="game-wrap" id="game-wrap" style="display:none">
   <div class="top-bar"><h2>Ward Strain Spotters</h2></div>
   <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
   <div id="game-area"></div>
 </div>
 <div class="end-screen" id="end-screen">
-  <div class="end-title">Well done — all three scenarios complete</div>
+  <div class="end-title">Well done — all scenarios complete</div>
   <div class="end-msg">These scenarios are drawn directly from a mixed methods systematic review of 16 studies on hospital ward strain. The evidence shows that ward strain is a systemic issue — not an individual failing — and that staff predominantly use reactive resilience to cope, with little anticipation or learning built into the system.</div>
   <div class="reflect-box">
     <p>What is one thing your ward could do differently?</p>
@@ -82,7 +103,7 @@ button.primary:hover{opacity:0.85}
 <script>
 const SCENARIOS=[
   {
-    num:"1 of 3",hasPatient:false,
+    num:"1 of 10",hasPatient:false,
     staffText:"Medication rounds are regularly delayed. Staff report extending working hours just to complete required tasks. Nurse-to-patient ratios on some wards reach 1 to 11, leaving little time to deliver care safely and on time.",
     patientText:null,patientEvidence:null,
     staffAction:"Nurses extend their working hours and push through medication rounds late in order to keep up with demand under conditions of staff shortage.",
@@ -96,7 +117,7 @@ const SCENARIOS=[
     }
   },
   {
-    num:"2 of 3",hasPatient:true,
+    num:"2 of 10",hasPatient:true,
     staffText:"Comfort care, emotional support, repositioning, and oral care are among the tasks most frequently missed when wards are understaffed. Delayed assessment increases the risk of pressure ulcers, falls, and urinary tract infections.",
     patientText:"Patients placed on clinically inappropriate wards described feeling lost, confused about their care, and unable to get timely help. Some felt staff were too busy to respond to their needs.",
     patientEvidence:"Patient perspective based on: Goulding, 2015 — qualitative interviews with NHS inpatients.",
@@ -111,7 +132,7 @@ const SCENARIOS=[
     }
   },
   {
-    num:"3 of 3",hasPatient:false,
+    num:"3 of 10",hasPatient:false,
     staffText:"Around 36% of nurses reported job dissatisfaction and around 30% intended to leave their positions. Doctors reported high workload and work-related strain. Staff used presenteeism — coming to work despite illness — to cover shifts during shortages, which worsened fatigue and wellbeing over time.",
     patientText:null,patientEvidence:null,
     staffAction:"Nurses and doctors continue working under sustained pressure with no additional structural support. Over time they experience burnout, job dissatisfaction, and increased intention to leave.",
@@ -123,23 +144,132 @@ const SCENARIOS=[
       wrong:"Both need another look. Burnout and intention to leave are Outcomes. Presenteeism — absorbing the gap with personal effort despite illness — is Respond. It is the most exhausted form of reactive adaptation.",
       refs:"Evidence from: Arogyaswamy, 2022; Brophy, 2024; Catania, 2024; Cho, 2021; Krämer, 2016; Sanford, 2022; Teoh, 2021"
     }
+  },
+  {
+    num:"4 of 10",hasPatient:false,
+    staffText:"Most wards in this review coped with strain reactively. A small number of studies described a different approach: teams used predictive analysis of patient inflow and outflow data to plan staffing and bed capacity ahead of expected surges in demand, rather than responding only once wards became short-staffed.",
+    patientText:null,patientEvidence:null,
+    staffAction:"A ward team uses data on expected admissions and discharges to plan staffing levels in advance of an anticipated busy period.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Anticipate",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Planning staffing ahead of an expected admissions surge is a care-coordination action — that sits in Process. Using predictive data to prepare before strain hits, rather than reacting once it does, is the Anticipate capacity — the rarest of the four capacities in this review's evidence.",
+      spo:"Check the SPO layer. Using inflow and outflow data to plan staffing is an action taken during care coordination — that is Process, not Structure (the staffing itself) or Outcome (the result).",
+      res:"Check the resilience capacity. Planning ahead of an expected surge, before it happens, is Anticipate — knowing what to expect. It is different from Respond, which reacts after something happens.",
+      wrong:"Both need another look. Planning staffing using inflow and outflow data is a Process action. Doing it ahead of an expected surge, rather than reacting to one already underway, is Anticipate.",
+      refs:"Evidence from: Arogyaswamy, 2022; Duffield, 2020; Happell, 2013 (cited together in the review for this finding)"
+    }
+  },
+  {
+    num:"5 of 10",hasPatient:false,
+    staffText:"A small number of studies found staff drawing on more proactive resilience strategies. Nurse leaders used expertise built up over time managing bed pressures to make capacity decisions, rather than repeating the same reactive fix each time a ward became busy.",
+    patientText:null,patientEvidence:null,
+    staffAction:"A nurse leader draws on expertise built from past experience managing bed pressures to make a capacity decision now.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Learn",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Making a bed-management decision is a care-coordination action — Process. Drawing on expertise built up from past experience, rather than repeating the same reactive fix, is the Learn capacity — knowing what has happened and using it. This is one of only a small number of Learn examples identified across all 16 studies.",
+      spo:"Check the SPO layer. A nurse leader making a capacity decision is a coordination action taken during care — that is Process.",
+      res:"Check the resilience capacity. Drawing on expertise accumulated over time, rather than reacting fresh to each new pressure, is Learn — using what has happened before to inform decisions now.",
+      wrong:"Both need another look. Making a capacity decision is a Process action. Basing it on expertise built from past experience, rather than only reacting to the immediate situation, is Learn.",
+      refs:"Evidence from: Arogyaswamy, 2022; Duffield, 2020; Happell, 2013 (cited together in the review for this finding)"
+    }
+  },
+  {
+    num:"6 of 10",hasPatient:false,
+    staffText:"The same small number of studies described wards introducing real-time monitoring dashboards, giving staff visibility of workload and capacity pressure as it built through the shift, rather than only recognising strain once problems had already occurred.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Staff use a real-time dashboard to track workload and capacity pressure as it changes through the shift.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Monitor",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Using a dashboard to track workload is a coordination action taken during care — Process. Watching capacity and workload build in real time is the Monitor capacity — knowing what to look for as it happens. Monitor is one of the two capacities this review found wards use reasonably consistently, alongside Respond.",
+      spo:"Check the SPO layer. Using a dashboard to track workload during a shift is an action taken during care coordination — Process.",
+      res:"Check the resilience capacity. Tracking pressure as it builds, in real time, is Monitor — watching what is happening rather than reacting only once something has already gone wrong (Respond) or planning ahead of it (Anticipate).",
+      wrong:"Both need another look. Using a dashboard to track workload is a Process action. Watching capacity build in real time, before problems occur, is Monitor.",
+      refs:"Evidence from: Arogyaswamy, 2022; Duffield, 2020; Happell, 2013 (cited together in the review for this finding)"
+    }
+  },
+  {
+    num:"7 of 10",hasPatient:false,
+    staffText:"Hospital support staff — cleaners, porters, personal support workers — described feeling unsupported and lacking recognition from management under sustained pressure. They said they kept a close eye on how their own workload and wellbeing were declining, with no change to staffing or management support in place.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Support staff continue working while closely tracking their own declining workload and wellbeing, in a management structure that provides little recognition or support.",
+    drops:{spo:{answer:"Structure",options:["Structure","Process","Outcome"]},res:{answer:"Monitor",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. A management structure that leaves staff feeling unsupported and unrecognised is a Structure issue — it is about organisational governance and support, not a specific action taken during care. Staff staying alert to their own declining workload and wellbeing, without any structural change in response, is the Monitor capacity — watching what is happening without yet being able to act on it.",
+      spo:"Check the SPO layer. Feeling unsupported and lacking recognition from management is about organisational structure and governance — that is Structure, not an action taken during care (Process) or a result of care (Outcome).",
+      res:"Check the resilience capacity. Staff watching their own workload and wellbeing decline, without a structural response, is Monitor — knowing what to look for. It is different from Respond, which is an active reaction to something happening.",
+      wrong:"Both need another look. Feeling unsupported by management is a Structure issue — about governance and support, not an action or outcome. Watching wellbeing decline without acting is Monitor.",
+      refs:"Evidence from: Brophy, 2024; Catania, 2024; Happell, 2013; Park, 2018"
+    }
+  },
+  {
+    num:"8 of 10",hasPatient:false,
+    staffText:"Bed occupancy across ward settings averaged around 85% (26 to 30 beds), and equipment shortages delayed patient discharge. Staff described this as a constant background pressure they had to manage around on every shift.",
+    patientText:null,patientEvidence:null,
+    staffAction:"The ward continues to operate at high bed occupancy with recurring equipment shortages, while staff adjust their work around these fixed constraints without any change to bed numbers or equipment supply.",
+    drops:{spo:{answer:"Structure",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. High bed occupancy and equipment shortages are Structure — physical infrastructure and resources, not an action or a result. Staff adjusting their work around these fixed constraints, shift after shift, is the Respond capacity — reacting to what is in front of them without the underlying constraint changing.",
+      spo:"Check the SPO layer. Bed occupancy and equipment shortages are about physical infrastructure — that is Structure, the resources and set-up a ward has to work with.",
+      res:"Check the resilience capacity. Adjusting work around a fixed constraint, shift after shift, without planning ahead or changing the constraint itself, is Respond — reacting to immediate pressure.",
+      wrong:"Both need another look. High bed occupancy and equipment shortages are Structure. Staff adjusting around them each shift, without change to the underlying constraint, is Respond.",
+      refs:"Evidence from: Al-Kandari, 2008; Arogyaswamy, 2022; Catania, 2024; Sanford, 2022"
+    }
+  },
+  {
+    num:"9 of 10",hasPatient:true,
+    staffText:"Across many of the included studies, increased workload was consistently linked to lower patient care quality. Staff described reacting to immediate demands as they arose, with little time left to address quality concerns beyond the moment.",
+    patientText:"In a large patient survey (157,481 responses), patients linked higher nursing workload to poorer perceptions of the safety and quality of the care they received.",
+    patientEvidence:"Patient perspective based on: Magalhaes, 2017 — survey of nurses and patients across clinical and surgical units.",
+    staffAction:"Staff respond to immediate care demands as they arise during a busy shift, with little capacity to address the broader quality concerns patients are experiencing.",
+    drops:{spo:{answer:"Outcome",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Poorer patient-perceived care quality, linked to higher nursing workload, is an Outcome — the result of process pressures over time. Staff reacting to whatever demand is immediately in front of them, with no time left for broader quality concerns, is the Respond capacity — the most common pattern in this review.",
+      spo:"Check the SPO layer. Lower patient-perceived care quality is a result — an Outcome — linked to workload pressures, not an action itself.",
+      res:"Check the resilience capacity. Reacting to immediate demands as they arise, without capacity to address quality concerns beyond the moment, is Respond — the dominant pattern across this review's evidence.",
+      wrong:"Both need another look. Poorer patient-perceived care quality is an Outcome. Staff reacting only to what is immediately in front of them is Respond.",
+      refs:"Evidence from: Brophy, 2024; Catania, 2024; Duffield, 2020; Goulding, 2015; Happell, 2013; Krämer, 2016; Magalhaes, 2017; Nilsen, 2019; Park, 2018; Teoh, 2021"
+    }
+  },
+  {
+    num:"10 of 10",hasPatient:false,
+    staffText:"Medication labelling was sometimes skipped to save time during staff shortages. Staff described staying alert to whether a shortcut was safe, watching closely for any sign a patient had been affected, even as they continued taking the shortcut under pressure.",
+    patientText:null,patientEvidence:null,
+    staffAction:"A nurse skips medication labelling steps to save time during a short-staffed shift, while remaining watchful for signs that a patient has been affected.",
+    drops:{spo:{answer:"Outcome",options:["Structure","Process","Outcome"]},res:{answer:"Monitor",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Skipped medication labelling under staff shortage is a patient safety Outcome — a trade-off made under pressure, not the shortage itself (Structure) or a standard care action (Process). Staying watchful for signs a patient has been affected, while still taking the shortcut, is the Monitor capacity — tracking risk in real time even while it is being created.",
+      spo:"Check the SPO layer. Skipped medication labelling is a patient safety outcome — a quality and safety trade-off made under pressure, which this review's own methods classify as an Outcome rather than a routine Process step.",
+      res:"Check the resilience capacity. Watching closely for signs of harm while continuing the shortcut is Monitor — knowing what to look for — not Respond, which would mean reacting after harm has already occurred.",
+      wrong:"Both need another look. Skipped medication labelling under pressure is an Outcome — a safety trade-off, not a routine action. Watching for signs of harm while it happens is Monitor.",
+      refs:"Evidence from: Al-Kandari, 2008; Buerhaus, 2007; Goulding, 2015; Krämer, 2016; Sanford, 2022"
+    }
   }
 ];
 
 let current=0,answered=false,pendingChip=null,dragChip=null,history=[];
 
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startGame(){
+  document.getElementById('start-screen').style.display='none';
+  document.getElementById('game-wrap').style.display='block';
+  renderScenario();
+}
+
 function renderScenario(){
   answered=false;pendingChip=null;
   const s=SCENARIOS[current];
   const saved=history[current]||{};
+  const spoOptOrder=saved.spoOrder||(saved.spoOrder=shuffle(s.drops.spo.options));
+  const resOptOrder=saved.resOrder||(saved.resOrder=shuffle(s.drops.res.options));
   document.getElementById('prog').style.width=((current/SCENARIOS.length)*100)+'%';
-  const spoOpts=s.drops.spo.options.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.spo===o?' used':''}" draggable="true" data-val="${o}" data-group="spo" onclick="chipClick(this)">${o}</div>`).join('');
-  const resOpts=s.drops.res.options.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.res===o?' used':''}" draggable="true" data-val="${o}" data-group="res" onclick="chipClick(this)">${o}</div>`).join('');
+  const spoOpts=spoOptOrder.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.spo===o?' used':''}" draggable="true" data-val="${o}" data-group="spo" onclick="chipClick(this)">${o}</div>`).join('');
+  const resOpts=resOptOrder.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.res===o?' used':''}" draggable="true" data-val="${o}" data-group="res" onclick="chipClick(this)">${o}</div>`).join('');
   const spoFilled=saved.userAnswers&&saved.userAnswers.spo;
   const resFilled=saved.userAnswers&&saved.userAnswers.res;
   const perspHTML=s.hasPatient?`<div class="perspectives"><div class="perspective-box staff"><div class="persp-label staff">Staff perspective</div><div class="persp-text">${s.staffText}</div></div><div class="perspective-box patient"><div class="persp-label patient">Patient perspective</div><div class="persp-text">${s.patientText}</div><div class="evidence-note">${s.patientEvidence}</div></div></div>`:`<div class="perspective-box staff"><div class="persp-label staff">Staff perspective</div><div class="persp-text">${s.staffText}</div></div><div class="patient-absent">Patient perspective not available for this scenario — only 2 of 16 studies in this review included patient voices. This is itself a finding.</div>`;
   document.getElementById('game-area').innerHTML=`<div class="scenario-card"><div class="scenario-num">Scenario ${s.num}</div>${perspHTML}<div class="classify-note"><strong>What to classify:</strong> ${s.staffAction}</div><div class="drop-row"><div><div class="drop-col-label">SPO layer</div><div class="drop-zone${spoFilled?' filled':''}" id="dz-spo" ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'spo')" onclick="dzClick(this,'spo')">${spoFilled?spoFilled:'Drop or tap here'}<button class="remove-btn" onclick="removeDz(event,'spo')">×</button></div></div><div><div class="drop-col-label">Resilience capacity</div><div class="drop-zone${resFilled?' filled':''}" id="dz-res" ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'res')" onclick="dzClick(this,'res')">${resFilled?resFilled:'Drop or tap here'}<button class="remove-btn" onclick="removeDz(event,'res')">×</button></div></div></div><div class="chips-area"><div class="chips-label">Tap to select, then tap a box — or drag and drop</div><div class="chips-group-label">SPO layer</div><div class="chips" id="spo-chips">${spoOpts}</div><div class="chips-group-label">Resilience capacity</div><div class="chips" id="res-chips">${resOpts}</div></div><div class="feedback-box" id="feedback"></div><div class="btn-row"><button class="primary" onclick="submitAnswer()" id="submit-btn">Check</button>${current>0?'<button onclick="prevScenario()">← Back</button>':''}</div></div>`;
-  if(!history[current])history[current]={userAnswers:{}};
+  if(!history[current])history[current]={userAnswers:{},spoOrder:spoOptOrder,resOrder:resOptOrder};
   attachDragListeners();
 }
 
@@ -157,7 +287,6 @@ function nextScenario(){current++;renderScenario();}
 function prevScenario(){if(current>0){answered=false;current--;renderScenario();const saved=history[current];if(saved&&saved.answered){answered=true;const s=SCENARIOS[current];const ua=saved.userAnswers;const spoCorrect=ua.spo===s.drops.spo.answer;const resCorrect=ua.res===s.drops.res.answer;const dzSpo=document.getElementById('dz-spo');const dzRes=document.getElementById('dz-res');dzSpo.classList.remove('filled');dzRes.classList.remove('filled');dzSpo.classList.add(spoCorrect?'correct':'wrong');dzRes.classList.add(resCorrect?'correct':'wrong');let fbClass,fbText;if(spoCorrect&&resCorrect){fbClass='correct';fbText='<strong>Both right</strong><br>'+s.feedback.correct;}else if(spoCorrect&&!resCorrect){fbClass='partial';fbText='<strong>SPO right, resilience capacity needs another look</strong><br>'+s.feedback.res;}else if(!spoCorrect&&resCorrect){fbClass='partial';fbText='<strong>Resilience right, SPO layer needs another look</strong><br>'+s.feedback.spo;}else{fbClass='wrong';fbText='<strong>Both need another look</strong><br>'+s.feedback.wrong;}fbText+=`<div class="ref-line">${s.feedback.refs}</div>`;const fb=document.getElementById('feedback');fb.className='feedback-box show '+fbClass;fb.innerHTML=fbText;const isLast=current===SCENARIOS.length-1;document.getElementById('submit-btn').textContent=isLast?'Finish →':'Next →';document.getElementById('submit-btn').onclick=isLast?showEnd:nextScenario;}}}
 function showEnd(){document.getElementById('game-area').style.display='none';document.getElementById('prog').style.width='100%';document.getElementById('end-screen').classList.add('show');}
 function restart(){current=0;answered=false;pendingChip=null;history=[];document.getElementById('end-screen').classList.remove('show');document.getElementById('game-area').style.display='block';renderScenario();}
-renderScenario();
 </script>
 </body>
 </html>
