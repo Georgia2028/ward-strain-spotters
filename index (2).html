@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward Strain Spotters</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9f8f4;color:#1a1a1a;padding:1rem}
+.game-wrap{padding:1.5rem 0;max-width:680px;margin:0 auto}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem}
+.top-bar h2{font-size:18px;font-weight:500}
+.progress-bar{height:4px;background:#e5e3db;border-radius:4px;margin-bottom:1.5rem;overflow:hidden}
+.progress-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.4s ease}
+.scenario-card{background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem}
+.scenario-num{font-size:12px;color:#888780;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em}
+.perspective-box{border-radius:8px;padding:1rem;border:0.5px solid #d3d1c7;margin-bottom:1rem}
+.perspective-box.staff{background:#E6F1FB}
+.perspective-box.patient{background:#EEEDFE}
+.perspectives{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+.persp-label{font-size:11px;font-weight:600;margin-bottom:6px}
+.persp-label.staff{color:#185FA5}
+.persp-label.patient{color:#534AB7}
+.persp-text{font-size:13px;line-height:1.55}
+.evidence-note{font-size:11px;color:#534AB7;font-style:italic;margin-top:6px}
+.classify-note{font-size:12px;color:#185FA5;background:#E6F1FB;border:0.5px solid #85B7EB;border-radius:8px;padding:7px 12px;margin-bottom:12px;line-height:1.5}
+.drop-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.drop-col-label{font-size:11px;color:#888780;margin-bottom:6px}
+.drop-zone{min-height:52px;border:1.5px dashed #c5c3ba;border-radius:8px;padding:8px 10px;font-size:12px;color:#888780;display:flex;align-items:center;justify-content:center;text-align:center;transition:border-color 0.2s,background 0.2s;position:relative;cursor:pointer;background:#fff}
+.drop-zone.dragover{border-color:#1D9E75;background:#E1F5EE}
+.drop-zone.filled{border-style:solid;border-color:#c5c3ba;background:#f1efe8;color:#1a1a1a;font-size:13px;font-weight:500}
+.drop-zone.filled .remove-btn{display:flex}
+.remove-btn{display:none;position:absolute;top:4px;right:6px;font-size:14px;color:#888780;cursor:pointer;line-height:1;background:none;border:none;padding:0}
+.drop-zone.correct{border-color:#1D9E75;background:#E1F5EE;color:#0F6E56}
+.drop-zone.wrong{border-color:#E24B4A;background:#FCEBEB;color:#A32D2D}
+.chips-area{margin-top:1rem}
+.chips-label{font-size:12px;color:#888780;margin-bottom:8px}
+.chips-group-label{font-size:11px;color:#888780;margin-bottom:5px;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:6px 14px;border-radius:20px;border:0.5px solid #c5c3ba;background:#fff;font-size:12px;font-weight:500;cursor:grab;user-select:none;transition:background 0.15s,transform 0.15s}
+.chip:active{transform:scale(0.97)}
+.chip.dragging{opacity:0.4}
+.chip.used{opacity:0.3;pointer-events:none}
+.chip.selected{outline:2px solid #1D9E75;outline-offset:1px}
+.btn-row{display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap}
+button{padding:8px 18px;border-radius:8px;border:0.5px solid #c5c3ba;background:transparent;font-size:13px;color:#1a1a1a;cursor:pointer;transition:background 0.15s}
+button:hover{background:#f1efe8}
+button.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+button.primary:hover{opacity:0.85}
+.feedback-box{margin-top:1rem;padding:1rem;border-radius:8px;font-size:13px;line-height:1.6;display:none}
+.feedback-box.show{display:block}
+.feedback-box.correct{background:#E1F5EE;color:#0F6E56;border:0.5px solid #5DCAA5}
+.feedback-box.partial{background:#FAEEDA;color:#633806;border:0.5px solid #EF9F27}
+.feedback-box.wrong{background:#FCEBEB;color:#A32D2D;border:0.5px solid #F09595}
+.ref-line{font-size:11px;margin-top:8px;opacity:0.8;font-style:italic;border-top:0.5px solid currentColor;padding-top:6px}
+.end-screen{text-align:center;padding:2rem 1rem;display:none;max-width:680px;margin:0 auto}
+.end-screen.show{display:block}
+.end-title{font-size:20px;font-weight:500;margin-bottom:0.75rem}
+.end-msg{font-size:14px;color:#444;margin-bottom:1.5rem;line-height:1.6}
+.reflect-box{background:#f1efe8;border-radius:12px;padding:1.25rem;margin:1.25rem 0;text-align:left}
+.reflect-box p{font-size:15px;font-weight:500;margin-bottom:0.75rem;line-height:1.5}
+.reflect-box textarea{width:100%;min-height:80px;border:0.5px solid #c5c3ba;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;line-height:1.5;background:#fff}
+.patient-absent{font-size:11px;color:#888780;font-style:italic;padding:0.75rem;background:#f1efe8;border-radius:8px;border:0.5px solid #d3d1c7;margin-bottom:1rem}
+.start-screen{text-align:left;padding:2rem 1.25rem;max-width:680px;margin:0 auto}
+.start-screen .end-title{text-align:center}
+.start-list{list-style:none;counter-reset:step;display:flex;flex-direction:column;gap:0.85rem;margin-bottom:1.5rem}
+.start-list li{counter-increment:step;position:relative;padding-left:2rem;font-size:14px;line-height:1.55;color:#333}
+.start-list li::before{content:counter(step);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:#1a1a1a;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.start-list li strong{color:#1a1a1a}
+.start-btn-row{text-align:center}
+.key-box{background:#f1efe8;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:1.5rem}
+.key-box h3{font-size:13px;font-weight:600;margin-bottom:0.7rem;color:#1a1a1a}
+.key-box h3:not(:first-child){margin-top:1rem}
+.key-row{display:flex;gap:10px;margin-bottom:8px;font-size:13px;line-height:1.5}
+.key-row:last-child{margin-bottom:0}
+.key-tag{flex:0 0 auto;font-weight:600;font-size:11px;padding:3px 9px;border-radius:12px;height:fit-content;white-space:nowrap}
+.key-tag.spo{background:#E6F1FB;color:#185FA5}
+.key-tag.res{background:#EEEDFE;color:#534AB7}
+.key-desc{color:#444}
+.info-btn{width:24px;height:24px;border-radius:50%;border:0.5px solid #c5c3ba;background:#fff;font-size:12px;font-weight:600;color:#666;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.ref-panel{display:none;margin-bottom:1.25rem}
+.ref-panel.show{display:block}
+@media(max-width:500px){.perspectives{grid-template-columns:1fr}.drop-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="start-screen" id="start-screen">
+  <div class="end-title">How to play Ward Strain Spotters</div>
+  <ol class="start-list">
+    <li>Each scenario shows a real situation from the ward strain systematic review — sometimes from a staff perspective only, sometimes staff and patient side by side.</li>
+    <li>Read the situation, then look at <strong>What to classify</strong> — the specific action you need to sort.</li>
+    <li>Sort it two ways: the <strong>SPO layer</strong> (Structure, Process, or Outcome) and the <strong>resilience capacity</strong> (Respond, Monitor, Learn, or Anticipate).</li>
+    <li>Drag a chip into a box, or tap a chip then tap a box — both work.</li>
+    <li>Changed your mind? Tap the × on a filled box to clear it and pick again.</li>
+    <li>Once both boxes are filled, tap <strong>Check</strong>. You'll see what's right, what's not, and why — plus the study it's drawn from.</li>
+    <li>Tap <strong>Next</strong> to continue, or <strong>Back</strong> to revisit a previous scenario — your answer and feedback are saved.</li>
+    <li>At the end, discuss as a table: <strong>what is one thing your ward could do differently?</strong></li>
+  </ol>
+  <div class="key-box">
+    <h3>SPO layer</h3>
+    <div class="key-row"><span class="key-tag spo">Structure</span><span class="key-desc">What capacity the ward has — staffing, beds, equipment, environment.</span></div>
+    <div class="key-row"><span class="key-tag spo">Process</span><span class="key-desc">How care is delivered — the actions and coordination staff carry out.</span></div>
+    <div class="key-row"><span class="key-tag spo">Outcome</span><span class="key-desc">What happens to patients and staff as a result.</span></div>
+    <h3>Resilience capacities (Hollnagel)</h3>
+    <div class="key-row"><span class="key-tag res">Anticipate</span><span class="key-desc">Knowing what to expect — planning ahead of a problem before it happens.</span></div>
+    <div class="key-row"><span class="key-tag res">Monitor</span><span class="key-desc">Knowing what to look for — watching a situation as it unfolds.</span></div>
+    <div class="key-row"><span class="key-tag res">Respond</span><span class="key-desc">Knowing what to do — reacting once a problem has occurred.</span></div>
+    <div class="key-row"><span class="key-tag res">Learn</span><span class="key-desc">Knowing what has happened — using past experience to inform future practice.</span></div>
+  </div>
+  <div class="start-btn-row"><button class="primary" onclick="startGame()">Start</button></div>
+</div>
+<div class="game-wrap" id="game-wrap" style="display:none">
+  <div class="top-bar"><h2>Ward Strain Spotters</h2><button class="info-btn" onclick="toggleRef()" title="Framework key">?</button></div>
+  <div class="ref-panel key-box" id="ref-panel">
+    <h3>SPO layer</h3>
+    <div class="key-row"><span class="key-tag spo">Structure</span><span class="key-desc">What capacity the ward has — staffing, beds, equipment, environment.</span></div>
+    <div class="key-row"><span class="key-tag spo">Process</span><span class="key-desc">How care is delivered — the actions and coordination staff carry out.</span></div>
+    <div class="key-row"><span class="key-tag spo">Outcome</span><span class="key-desc">What happens to patients and staff as a result.</span></div>
+    <h3>Resilience capacities (Hollnagel)</h3>
+    <div class="key-row"><span class="key-tag res">Anticipate</span><span class="key-desc">Knowing what to expect — planning ahead of a problem before it happens.</span></div>
+    <div class="key-row"><span class="key-tag res">Monitor</span><span class="key-desc">Knowing what to look for — watching a situation as it unfolds.</span></div>
+    <div class="key-row"><span class="key-tag res">Respond</span><span class="key-desc">Knowing what to do — reacting once a problem has occurred.</span></div>
+    <div class="key-row"><span class="key-tag res">Learn</span><span class="key-desc">Knowing what has happened — using past experience to inform future practice.</span></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div id="game-area"></div>
+</div>
+<div class="end-screen" id="end-screen">
+  <div class="end-title">Well done — all scenarios complete</div>
+  <div class="end-msg">These scenarios are drawn directly from a mixed methods systematic review of 16 studies on hospital ward strain. The evidence shows that ward strain is a systemic issue — not an individual failing — and that staff predominantly use reactive resilience to cope, with little anticipation or learning built into the system.</div>
+  <div class="reflect-box">
+    <p>What is one thing your ward could do differently?</p>
+    <textarea placeholder="Discuss at your table and write your thoughts here..."></textarea>
+  </div>
+  <button class="primary" onclick="restart()">Play again</button>
+</div>
+<script>
+const SCENARIOS=[
+  {
+    num:"1 of 10",hasPatient:false,
+    staffText:"Medication rounds are regularly delayed. Staff report extending working hours just to complete required tasks. Nurse-to-patient ratios on some wards reach 1 to 11, leaving little time to deliver care safely and on time.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Nurses extend their working hours and push through medication rounds late in order to keep up with demand under conditions of staff shortage.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Delivering a medication round — even late, even after extending working hours — is a care action. That sits in Process. Pushing through under pressure without any structural change is the Respond capacity: doing what needs to be done when something goes wrong. It keeps the ward going in the short term but does not address the staffing shortage underneath.",
+      spo:"Check the SPO layer. Nurses delivering medications, even late, is a care action — that is Process. The staffing shortage driving the delay is Structure. Any harm caused by the delay would be an Outcome.",
+      res:"Check the resilience capacity. Extending working hours and pushing through under immediate pressure is Respond — reacting to what is happening right now. There is no planning ahead or learning from the pattern here.",
+      wrong:"Both need another look. Pushing through a delayed medication round is a care action — Process. Doing it by extending working hours under immediate pressure is Respond — the most reactive of the four capacities.",
+      refs:"Evidence from: Al-Kandari, 2009; Cho, 2021; Happell, 2013; Krämer, 2016; Park, 2018; Sanford, 2022"
+    }
+  },
+  {
+    num:"2 of 10",hasPatient:true,
+    staffText:"Comfort care, emotional support, repositioning, and oral care are among the tasks most frequently missed when wards are understaffed. Delayed assessment increases the risk of pressure ulcers, falls, and urinary tract infections.",
+    patientText:"Patients placed on clinically inappropriate wards described feeling lost, confused about their care, and unable to get timely help. Some felt staff were too busy to respond to their needs.",
+    patientEvidence:"Patient perspective based on: Goulding, 2015 — qualitative interviews with NHS inpatients.",
+    staffAction:"Comfort care, repositioning, and oral hygiene get missed when the ward is short-staffed. What you're classifying here is what happens next: patients go on to develop complications — pressure ulcers, falls, urinary tract infections — as a result.",
+    drops:{spo:{answer:"Outcome",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. The missed care itself (comfort care, repositioning, oral hygiene) would be Process — but what you're classifying here is what happened to the patient as a result, which is an Outcome. Nurses continuing to work under impossible conditions, absorbing the staffing gap, is the Respond capacity. The patient experience of feeling lost and unable to get help is the human cost of that same cycle.",
+      spo:"Check the SPO layer. The missed care tasks (repositioning, oral hygiene) would be Process. But pressure ulcers, falls, and infections are what happened as a result — that makes them Outcomes.",
+      res:"Check the resilience capacity. Nurses continuing despite being unable to provide full care — absorbing the gap with personal effort — is Respond. It is reactive and unsustainable.",
+      wrong:"Both need another look. The missed care itself is Process — but pressure ulcers, falls, and infections are what happened as a result, which makes them Outcomes. Nurses absorbing the gap by continuing under impossible conditions is Respond.",
+      refs:"Evidence from: Al-Kandari, 2009; Brophy, 2024; Cho, 2021; Goulding, 2015; Magalhaes, 2017; Mainz, 2024; Park, 2018"
+    }
+  },
+  {
+    num:"3 of 10",hasPatient:false,
+    staffText:"Around 36% of nurses reported job dissatisfaction and around 30% intended to leave their positions. Doctors reported high workload and work-related strain. Staff used presenteeism — coming to work despite illness — to cover shifts during shortages, which worsened fatigue and wellbeing over time.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Nurses and doctors continue working under sustained pressure with no additional structural support. Over time they experience burnout, job dissatisfaction, and increased intention to leave.",
+    drops:{spo:{answer:"Outcome",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Burnout, job dissatisfaction, and intention to leave are Outcomes — the end result of sustained structural pressure with no systemic response. Presenteeism — coming in despite illness to cover gaps — is the Respond capacity in its most exhausted form. It keeps the ward running in the short term but worsens the very conditions it tries to address.",
+      spo:"Check the SPO layer. Burnout and intention to leave are Outcomes — consequences of sustained structural and process failures over time, not care actions in themselves.",
+      res:"Check the resilience capacity. Coming to work despite illness to cover short-staffed shifts is Respond — reacting to immediate pressure with personal endurance. Without Anticipate or Learn, the cycle continues.",
+      wrong:"Both need another look. Burnout and intention to leave are Outcomes. Presenteeism — absorbing the gap with personal effort despite illness — is Respond. It is the most exhausted form of reactive adaptation.",
+      refs:"Evidence from: Arogyaswamy, 2022; Brophy, 2024; Catania, 2024; Cho, 2021; Krämer, 2016; Sanford, 2022; Teoh, 2021"
+    }
+  },
+  {
+    num:"4 of 10",hasPatient:false,
+    staffText:"Most wards in this review coped with strain reactively. A small number of studies described a different approach: teams used predictive analysis of patient inflow and outflow data to plan staffing and bed capacity ahead of expected surges in demand, rather than responding only once wards became short-staffed.",
+    patientText:null,patientEvidence:null,
+    staffAction:"A ward team uses data on expected admissions and discharges to plan staffing levels in advance of an anticipated busy period.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Anticipate",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Planning staffing ahead of an expected admissions surge is a care-coordination action — that sits in Process. Using predictive data to prepare before strain hits, rather than reacting once it does, is the Anticipate capacity — the rarest of the four capacities in this review's evidence.",
+      spo:"Check the SPO layer. Using inflow and outflow data to plan staffing is an action taken during care coordination — that is Process, not Structure (the staffing itself) or Outcome (the result).",
+      res:"Check the resilience capacity. Planning ahead of an expected surge, before it happens, is Anticipate — knowing what to expect. It is different from Respond, which reacts after something happens.",
+      wrong:"Both need another look. Planning staffing using inflow and outflow data is a Process action. Doing it ahead of an expected surge, rather than reacting to one already underway, is Anticipate.",
+      refs:"Evidence from: Arogyaswamy, 2022; Duffield, 2020; Happell, 2013 (cited together in the review for this finding)"
+    }
+  },
+  {
+    num:"5 of 10",hasPatient:false,
+    staffText:"A small number of studies found staff drawing on more proactive resilience strategies. Nurse leaders used expertise built up over time managing bed pressures to make capacity decisions, rather than repeating the same reactive fix each time a ward became busy.",
+    patientText:null,patientEvidence:null,
+    staffAction:"A nurse leader draws on expertise built from past experience managing bed pressures to make a capacity decision now.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Learn",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Making a bed-management decision is a care-coordination action — Process. Drawing on expertise built up from past experience, rather than repeating the same reactive fix, is the Learn capacity — knowing what has happened and using it. This is one of only a small number of Learn examples identified across all 16 studies.",
+      spo:"Check the SPO layer. A nurse leader making a capacity decision is a coordination action taken during care — that is Process.",
+      res:"Check the resilience capacity. Drawing on expertise accumulated over time, rather than reacting fresh to each new pressure, is Learn — using what has happened before to inform decisions now.",
+      wrong:"Both need another look. Making a capacity decision is a Process action. Basing it on expertise built from past experience, rather than only reacting to the immediate situation, is Learn.",
+      refs:"Evidence from: Arogyaswamy, 2022; Duffield, 2020; Happell, 2013 (cited together in the review for this finding)"
+    }
+  },
+  {
+    num:"6 of 10",hasPatient:false,
+    staffText:"The same small number of studies described wards introducing real-time monitoring dashboards, giving staff visibility of workload and capacity pressure as it built through the shift, rather than only recognising strain once problems had already occurred.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Staff use a real-time dashboard to track workload and capacity pressure as it changes through the shift.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Monitor",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Using a dashboard to track workload is a coordination action taken during care — Process. Watching capacity and workload build in real time is the Monitor capacity — knowing what to look for as it happens. Monitor is one of the two capacities this review found wards use reasonably consistently, alongside Respond.",
+      spo:"Check the SPO layer. Using a dashboard to track workload during a shift is an action taken during care coordination — Process.",
+      res:"Check the resilience capacity. Tracking pressure as it builds, in real time, is Monitor — watching what is happening rather than reacting only once something has already gone wrong (Respond) or planning ahead of it (Anticipate).",
+      wrong:"Both need another look. Using a dashboard to track workload is a Process action. Watching capacity build in real time, before problems occur, is Monitor.",
+      refs:"Evidence from: Arogyaswamy, 2022; Duffield, 2020; Happell, 2013 (cited together in the review for this finding)"
+    }
+  },
+  {
+    num:"7 of 10",hasPatient:false,
+    staffText:"Hospital support staff — cleaners, porters, personal support workers — described feeling unsupported and lacking recognition from management under sustained pressure. They said they kept a close eye on how their own workload and wellbeing were declining, with no change to staffing or management support in place.",
+    patientText:null,patientEvidence:null,
+    staffAction:"Support staff keep working under sustained pressure, with little recognition or support from management, and no change to staffing or support in place.",
+    drops:{spo:{answer:"Structure",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. A management structure that leaves staff feeling unsupported and unrecognised is a Structure issue — it is about organisational governance and support, not a specific action taken during care. Staff continuing to work under that pressure, absorbing it without any structural change, is the Respond capacity — reacting to what is in front of them without the underlying conditions changing.",
+      spo:"Check the SPO layer. Feeling unsupported and lacking recognition from management is about organisational structure and governance — that is Structure, not an action taken during care (Process) or a result of care (Outcome).",
+      res:"Check the resilience capacity. Staff continuing to work through sustained pressure, without any structural change to help them, is Respond — reacting to immediate conditions rather than planning ahead (Anticipate) or drawing on past experience (Learn).",
+      wrong:"Both need another look. Feeling unsupported by management is a Structure issue — about governance and support, not an action or outcome. Continuing to work under that pressure without change is Respond.",
+      refs:"Evidence from: Brophy, 2024; Catania, 2024; Happell, 2013; Park, 2018"
+    }
+  },
+  {
+    num:"8 of 10",hasPatient:false,
+    staffText:"Bed occupancy across ward settings averaged around 85% (26 to 30 beds), and equipment shortages delayed patient discharge. Staff described this as a constant background pressure they had to manage around on every shift.",
+    patientText:null,patientEvidence:null,
+    staffAction:"The ward continues to operate at high bed occupancy with recurring equipment shortages, while staff adjust their work around these fixed constraints without any change to bed numbers or equipment supply.",
+    drops:{spo:{answer:"Structure",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. High bed occupancy and equipment shortages are Structure — physical infrastructure and resources, not an action or a result. Staff adjusting their work around these fixed constraints, shift after shift, is the Respond capacity — reacting to what is in front of them without the underlying constraint changing.",
+      spo:"Check the SPO layer. Bed occupancy and equipment shortages are about physical infrastructure — that is Structure, the resources and set-up a ward has to work with.",
+      res:"Check the resilience capacity. Adjusting work around a fixed constraint, shift after shift, without planning ahead or changing the constraint itself, is Respond — reacting to immediate pressure.",
+      wrong:"Both need another look. High bed occupancy and equipment shortages are Structure. Staff adjusting around them each shift, without change to the underlying constraint, is Respond.",
+      refs:"Evidence from: Al-Kandari, 2008; Arogyaswamy, 2022; Catania, 2024; Sanford, 2022"
+    }
+  },
+  {
+    num:"9 of 10",hasPatient:true,
+    staffText:"Across many of the included studies, increased workload was consistently linked to lower patient care quality. Staff described reacting to immediate demands as they arose, with little time left to address quality concerns beyond the moment.",
+    patientText:"In a large patient survey (157,481 responses), patients linked higher nursing workload to poorer perceptions of the safety and quality of the care they received.",
+    patientEvidence:"Patient perspective based on: Magalhaes, 2017 — survey of nurses and patients across clinical and surgical units.",
+    staffAction:"Staff respond to immediate care demands as they arise during a busy shift, with little capacity to address the broader quality concerns patients are experiencing.",
+    drops:{spo:{answer:"Outcome",options:["Structure","Process","Outcome"]},res:{answer:"Respond",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Poorer patient-perceived care quality, linked to higher nursing workload, is an Outcome — the result of process pressures over time. Staff reacting to whatever demand is immediately in front of them, with no time left for broader quality concerns, is the Respond capacity — the most common pattern in this review.",
+      spo:"Check the SPO layer. Lower patient-perceived care quality is a result — an Outcome — linked to workload pressures, not an action itself.",
+      res:"Check the resilience capacity. Reacting to immediate demands as they arise, without capacity to address quality concerns beyond the moment, is Respond — the dominant pattern across this review's evidence.",
+      wrong:"Both need another look. Poorer patient-perceived care quality is an Outcome. Staff reacting only to what is immediately in front of them is Respond.",
+      refs:"Evidence from: Brophy, 2024; Catania, 2024; Duffield, 2020; Goulding, 2015; Happell, 2013; Krämer, 2016; Magalhaes, 2017; Nilsen, 2019; Park, 2018; Teoh, 2021"
+    }
+  },
+  {
+    num:"10 of 10",hasPatient:false,
+    staffText:"Medication labelling was sometimes skipped to save time during staff shortages. Staff described staying alert to whether a shortcut was safe, watching closely for any sign a patient had been affected, even as they continued taking the shortcut under pressure.",
+    patientText:null,patientEvidence:null,
+    staffAction:"To save time on a short-staffed shift, a nurse skips medication labelling — a shortcut taken under pressure — while staying watchful for any sign the patient has been harmed by it.",
+    drops:{spo:{answer:"Process",options:["Structure","Process","Outcome"]},res:{answer:"Monitor",options:["Respond","Monitor","Learn","Anticipate"]}},
+    feedback:{
+      correct:"Both right. Skipping medication labelling is a care action taken under pressure — that makes it Process, the same way pushing through a delayed medication round elsewhere in this set is Process. Staying watchful for any sign the patient has been harmed, while still taking the shortcut, is the Monitor capacity — tracking risk in real time even while it is being created.",
+      spo:"Check the SPO layer. Skipping a step during medication administration is an action taken during care delivery — that is Process. If a patient were actually harmed as a result, that harm would be the Outcome — but nothing has happened to the patient yet here.",
+      res:"Check the resilience capacity. Watching closely for signs of harm while continuing the shortcut is Monitor — knowing what to look for — not Respond, which would mean reacting after harm has already occurred.",
+      wrong:"Both need another look. Skipping medication labelling under pressure is a care action taken during a shift — Process, not yet an Outcome since no harm has actually occurred. Watching for signs of harm while it happens is Monitor.",
+      refs:"Evidence from: Al-Kandari, 2008; Buerhaus, 2007; Goulding, 2015; Krämer, 2016; Sanford, 2022"
+    }
+  }
+];
+
+let current=0,answered=false,pendingChip=null,dragChip=null,history=[];
+
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startGame(){
+  document.getElementById('start-screen').style.display='none';
+  document.getElementById('game-wrap').style.display='block';
+  renderScenario();
+}
+
+function toggleRef(){document.getElementById('ref-panel').classList.toggle('show');}
+
+function renderScenario(){
+  answered=false;pendingChip=null;
+  const s=SCENARIOS[current];
+  const saved=history[current]||{};
+  const spoOptOrder=saved.spoOrder||(saved.spoOrder=s.drops.spo.options);
+  const resOptOrder=saved.resOrder||(saved.resOrder=["Anticipate","Monitor","Respond","Learn"]);
+  document.getElementById('prog').style.width=((current/SCENARIOS.length)*100)+'%';
+  const spoOpts=spoOptOrder.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.spo===o?' used':''}" draggable="true" data-val="${o}" data-group="spo" onclick="chipClick(this)">${o}</div>`).join('');
+  const resOpts=resOptOrder.map(o=>`<div class="chip${saved.userAnswers&&saved.userAnswers.res===o?' used':''}" draggable="true" data-val="${o}" data-group="res" onclick="chipClick(this)">${o}</div>`).join('');
+  const spoFilled=saved.userAnswers&&saved.userAnswers.spo;
+  const resFilled=saved.userAnswers&&saved.userAnswers.res;
+  const perspHTML=s.hasPatient?`<div class="perspectives"><div class="perspective-box staff"><div class="persp-label staff">Staff perspective</div><div class="persp-text">${s.staffText}</div></div><div class="perspective-box patient"><div class="persp-label patient">Patient perspective</div><div class="persp-text">${s.patientText}</div><div class="evidence-note">${s.patientEvidence}</div></div></div>`:`<div class="perspective-box staff"><div class="persp-label staff">Staff perspective</div><div class="persp-text">${s.staffText}</div></div><div class="patient-absent">Patient perspective not available for this scenario — only 2 of 16 studies in this review included patient voices. This is itself a finding.</div>`;
+  document.getElementById('game-area').innerHTML=`<div class="scenario-card"><div class="scenario-num">Scenario ${s.num}</div>${perspHTML}<div class="classify-note"><strong>What to classify:</strong> ${s.staffAction}</div><div class="drop-row"><div><div class="drop-col-label">SPO layer</div><div class="drop-zone${spoFilled?' filled':''}" id="dz-spo" ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'spo')" onclick="dzClick(this,'spo')">${spoFilled?spoFilled:'Drop or tap here'}<button class="remove-btn" onclick="removeDz(event,'spo')">×</button></div></div><div><div class="drop-col-label">Resilience capacity</div><div class="drop-zone${resFilled?' filled':''}" id="dz-res" ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this,'res')" onclick="dzClick(this,'res')">${resFilled?resFilled:'Drop or tap here'}<button class="remove-btn" onclick="removeDz(event,'res')">×</button></div></div></div><div class="chips-area"><div class="chips-label">Tap to select, then tap a box — or drag and drop</div><div class="chips-group-label">SPO layer</div><div class="chips" id="spo-chips">${spoOpts}</div><div class="chips-group-label">Resilience capacity</div><div class="chips" id="res-chips">${resOpts}</div></div><div class="feedback-box" id="feedback"></div><div class="btn-row"><button class="primary" onclick="submitAnswer()" id="submit-btn">Check</button>${current>0?'<button onclick="prevScenario()">← Back</button>':''}</div></div>`;
+  if(!history[current])history[current]={userAnswers:{},spoOrder:spoOptOrder,resOrder:resOptOrder};
+  attachDragListeners();
+}
+
+function getUserAnswers(){return history[current]?history[current].userAnswers:{};}
+function chipClick(el){if(el.classList.contains('used'))return;if(pendingChip===el){el.classList.remove('selected');pendingChip=null;return;}document.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));pendingChip=el;el.classList.add('selected');}
+function dzClick(dz,key){if(answered)return;if(pendingChip){placeChip(pendingChip.dataset.val,key,dz);pendingChip.classList.add('used');pendingChip.classList.remove('selected');pendingChip=null;}}
+function placeChip(val,key,dz){const ua=getUserAnswers();const prev=ua[key];if(prev){document.querySelectorAll('.chip').forEach(c=>{if(c.dataset.val===prev&&c.dataset.group===key)c.classList.remove('used');});}ua[key]=val;dz.classList.add('filled');const btn=dz.querySelector('.remove-btn');const textNode=dz.childNodes[0];if(textNode&&textNode.nodeType===3)textNode.textContent=val;else{const t=document.createTextNode(val);dz.insertBefore(t,dz.firstChild);}if(btn)btn.style.display='flex';}
+function removeDz(e,key){e.stopPropagation();if(answered)return;const ua=getUserAnswers();const val=ua[key];if(!val)return;document.querySelectorAll('.chip').forEach(c=>{if(c.dataset.val===val&&c.dataset.group===key)c.classList.remove('used');});delete ua[key];const dz=document.getElementById('dz-'+key);dz.classList.remove('filled');const btn=dz.querySelector('.remove-btn');const textNode=dz.childNodes[0];if(textNode&&textNode.nodeType===3)textNode.textContent='Drop or tap here';if(btn)btn.style.display='none';}
+function attachDragListeners(){document.querySelectorAll('.chip').forEach(c=>{c.addEventListener('dragstart',e=>{dragChip=c;c.classList.add('dragging');e.dataTransfer.setData('text/plain',c.dataset.val+'|'+c.dataset.group);});c.addEventListener('dragend',()=>{dragChip=null;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('dragging'));});});}
+function dzOver(e,dz){e.preventDefault();dz.classList.add('dragover');}
+function dzLeave(dz){dz.classList.remove('dragover');}
+function dzDrop(e,dz,key){e.preventDefault();dz.classList.remove('dragover');if(answered)return;const raw=e.dataTransfer.getData('text/plain').split('|');placeChip(raw[0],key,dz);if(dragChip){dragChip.classList.add('used');dragChip.classList.remove('selected');}}
+function submitAnswer(){if(answered)return;const s=SCENARIOS[current];const ua=getUserAnswers();const spoCorrect=ua.spo===s.drops.spo.answer;const resCorrect=ua.res===s.drops.res.answer;answered=true;if(history[current])history[current].answered=true;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));pendingChip=null;const dzSpo=document.getElementById('dz-spo');const dzRes=document.getElementById('dz-res');dzSpo.classList.remove('filled');dzRes.classList.remove('filled');dzSpo.classList.add(spoCorrect?'correct':'wrong');dzRes.classList.add(resCorrect?'correct':'wrong');const fb=document.getElementById('feedback');let fbClass,fbText;if(spoCorrect&&resCorrect){fbClass='correct';fbText='<strong>Both right</strong><br>'+s.feedback.correct;}else if(spoCorrect&&!resCorrect){fbClass='partial';fbText='<strong>SPO right, resilience capacity needs another look</strong><br>'+s.feedback.res;}else if(!spoCorrect&&resCorrect){fbClass='partial';fbText='<strong>Resilience right, SPO layer needs another look</strong><br>'+s.feedback.spo;}else{fbClass='wrong';fbText='<strong>Both need another look</strong><br>'+s.feedback.wrong;}fbText+=`<div class="ref-line">${s.feedback.refs}</div>`;fb.className='feedback-box show '+fbClass;fb.innerHTML=fbText;const isLast=current===SCENARIOS.length-1;document.getElementById('submit-btn').textContent=isLast?'Finish →':'Next →';document.getElementById('submit-btn').onclick=isLast?showEnd:nextScenario;}
+function nextScenario(){current++;renderScenario();}
+function prevScenario(){if(current>0){answered=false;current--;renderScenario();const saved=history[current];if(saved&&saved.answered){answered=true;const s=SCENARIOS[current];const ua=saved.userAnswers;const spoCorrect=ua.spo===s.drops.spo.answer;const resCorrect=ua.res===s.drops.res.answer;const dzSpo=document.getElementById('dz-spo');const dzRes=document.getElementById('dz-res');dzSpo.classList.remove('filled');dzRes.classList.remove('filled');dzSpo.classList.add(spoCorrect?'correct':'wrong');dzRes.classList.add(resCorrect?'correct':'wrong');let fbClass,fbText;if(spoCorrect&&resCorrect){fbClass='correct';fbText='<strong>Both right</strong><br>'+s.feedback.correct;}else if(spoCorrect&&!resCorrect){fbClass='partial';fbText='<strong>SPO right, resilience capacity needs another look</strong><br>'+s.feedback.res;}else if(!spoCorrect&&resCorrect){fbClass='partial';fbText='<strong>Resilience right, SPO layer needs another look</strong><br>'+s.feedback.spo;}else{fbClass='wrong';fbText='<strong>Both need another look</strong><br>'+s.feedback.wrong;}fbText+=`<div class="ref-line">${s.feedback.refs}</div>`;const fb=document.getElementById('feedback');fb.className='feedback-box show '+fbClass;fb.innerHTML=fbText;const isLast=current===SCENARIOS.length-1;document.getElementById('submit-btn').textContent=isLast?'Finish →':'Next →';document.getElementById('submit-btn').onclick=isLast?showEnd:nextScenario;}}}
+function showEnd(){document.getElementById('game-area').style.display='none';document.getElementById('prog').style.width='100%';document.getElementById('end-screen').classList.add('show');}
+function restart(){current=0;answered=false;pendingChip=null;history=[];document.getElementById('end-screen').classList.remove('show');document.getElementById('game-area').style.display='block';renderScenario();}
+</script>
+</body>
+</html>
